@@ -1,12 +1,13 @@
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "500kb" }));
 
-const FILE = "passages.json"; // created automatically
+const FILE = path.join(__dirname, "passages.json"); // created automatically
 
 function load() {
   try { return JSON.parse(fs.readFileSync(FILE, "utf8")); }
@@ -54,6 +55,9 @@ app.put("/passages/:id", function (req, res) {
   res.json(passage);
 });
 
+// Serve the website itself (the "lexi" folder) from the same server
+app.use(express.static(path.join(__dirname, "lexi")));
+
 app.listen(process.env.PORT || 3000, function () {
-  console.log("Lexi backend running");
+  console.log("Lexi is running");
 });
