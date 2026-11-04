@@ -518,7 +518,7 @@ voiceControl.addEventListener("change", async function () {
 // ===============================
 // PERSON 1 - SAVED PASSAGES (Home screen library, stored on the backend server)
 // ===============================
-const API_URL = "http://localhost:3000"; // change to the deployed backend address later
+const API_URL = ""; // empty = same address as the website (works on Render and on localhost:3000)
 let currentPassageId = null; // id of the saved passage shown in the reader (null if none)
 let editingId = null;        // id being edited right now (null when adding a new passage)
 
@@ -621,7 +621,7 @@ const FileUploadModule = (() => {
 
   if (!dropZone || !fileInput) {
     console.warn('[FileUploadModule] elements not found — skipping init');
-    return { init: () => { } };
+    return { init: () => {} };
   }
 
   let selectedFile = null;
@@ -886,7 +886,7 @@ const TextInputModule = (() => {
 
   if (!textarea) {
     console.warn('[TextInputModule] textarea not found');
-    return { init: () => { } };
+    return { init: () => {} };
   }
 
   function updateCharCount() {
