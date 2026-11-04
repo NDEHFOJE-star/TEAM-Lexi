@@ -27,7 +27,24 @@ Standard digital text formats often lack customization for readability, making r
 
 ## 📂 Repository Structure
 ```text
-├── index.html        # Main single-page application interface
-├── style.css         # Styling, layout, and accessibility theme variables
-├── script.js         # Core application logic, routing, OCR, and TTS handlers
+├── lexi/
+│   ├── index.html    # Main single-page application interface
+│   ├── style.css     # Styling, layout, and accessibility themes
+│   ├── script.js     # Application logic, OCR, and TTS handlers
+│   └── server.js     # Separate local development backend
+├── netlify.toml      # Publishes the lexi directory at the site root
 └── README.md         # Project documentation
+```
+
+## Netlify Deployment
+
+Netlify reads the root `netlify.toml` and publishes `lexi`, which contains
+`index.html`, `style.css`, and `script.js`. This static frontend does not require
+a build command. After deployment, open https://lexi-reading-helper.netlify.app/.
+Publishing the repository root instead causes a 404 at `/`, because there is no
+`index.html` in that directory.
+
+Passage storage currently uses a separate development backend at
+`http://localhost:3000`. Netlify static hosting does not run `lexi/server.js`, so
+loading the deployed frontend does not enable passage saving or retrieval. That
+backend requires a separate migration to a hosted API and persistent storage.
