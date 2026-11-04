@@ -3,7 +3,7 @@
 > A web-based reading assistant optimized specifically for individuals with dyslexia, visual fatigue, and reading difficulties.
 
 ## 🔗 Live Demo & Links
-* **Live Application:** [View Live Website Here](https://lexi-reading-helper.netlify.app/) *(https://github.com/NDEHFOJE-star/TEAM-Lexi)*
+* **Live Application:** [View Live Website Here](https://lexi-reading-help.netlify.app/) *(https://github.com/NDEHFOJE-star/TEAM-Lexi)*
 * **Course:** ICT 2140 - Introduction to Software Engineering
 
 ---
