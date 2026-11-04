@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lexi - Reading Helper</title>
+  <title>Lexi - Person 1 (Frontend Foundation + UI/UX)</title>
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -19,19 +19,20 @@
     <!-- HOME SCREEN: shows passages you've previously typed, uploaded, or scanned -->
     <div class="screen active" id="home">
       <h2>Your Passages</h2>
+      <p id="passageStatus"></p>
       <div class="passage-list" id="passageList">
-        <!-- script2.js fills this in from localStorage each time the page loads -->
+        <!-- scrip.js fills this in from the backend server each time the page loads -->
       </div>
     </div>
 
     <!-- READING SCREEN -->
-    <!-- Person 3: text-to-speech controls. Person 2: the "+" panel to add a passage. -->
     <div class="screen" id="reading">
       <div class="reading-controls">
         <button class="btn" onclick="showScreen('home')">Back</button>
+        <button class="btn" id="editPassageBtn">Edit</button>
         <button class="icon-btn" id="addPassageBtn" title="Add a passage">+</button>
-        <button class="icon-btn" id="playPauseBtn" aria-label="Play or pause reading">▶</button>
-        <button class="icon-btn" id="stopBtn" aria-label="Stop reading">⏹</button>
+        <button class="icon-btn" id="playPauseBtn">▶</button>
+        <button class="icon-btn" id="stopBtn">⏹</button>
         <label for="speedControl">Reading speed</label>
         <select id="speedControl">
           <option value="0.75">Slow</option>
@@ -40,7 +41,8 @@
         </select>
         <label for="voiceControl">Voice</label>
         <select id="voiceControl">
-          <option value="" selected>Browser default</option>
+          <option value="en-US-AriaNeural" selected>Aria</option>
+          <option value="en-US-GuyNeural">Guy</option>
         </select>
       </div>
 
@@ -102,10 +104,8 @@
     </div>
 
     <!-- SETTINGS SCREEN -->
-    <!-- Empty shell only. Person 4 owns the actual controls. -->
     <div class="screen" id="settings">
       <h2>Settings</h2>
-      <!-- ACCESSIBILITY SETTINGS -->
       <div class="accessibility-settings">
 
         <h3>Font</h3>
