@@ -20,7 +20,6 @@ function showScreen(screenId) {
 // Now with: pause/resume from the exact word + automatic translation + word highlighting
 // ===============================
 const synth = window.speechSynthesis;
-const speechSupported = Boolean(synth && window.SpeechSynthesisUtterance);
 const playPauseBtn = document.getElementById("playPauseBtn");
 const stopBtn = document.getElementById("stopBtn");
 const speedControl = document.getElementById("speedControl");
@@ -32,7 +31,6 @@ const SOURCE_LANG = "en"; // the language your passages are written in
 // Fill the voice dropdown: English (Aria, Guy) and French (Denise, Henri).
 // If those natural voices aren't on this device, it uses the first two available.
 function loadVoices() {
-  if (!speechSupported) return;
   const allVoices = synth.getVoices();
   if (allVoices.length === 0) return;
 
@@ -60,7 +58,6 @@ function loadVoices() {
   });
 
   const previousChoice = voiceControl.value;
-  if (chosenVoices.length === 0) chosenVoices = allVoices.slice(0, 2);
 
   voiceControl.innerHTML = "";
   chosenVoices.forEach(function (v) {
@@ -69,19 +66,16 @@ function loadVoices() {
       .replace(/\s*-.*$/, "")
       .replace(/\s*\(.*\)/, "")
       .replace(/\s*Online\s*/, "");
-    const language = languages[v.lang.slice(0, 2)]?.label || v.lang;
+    const language = languages[v.lang.slice(0, 2)].label;
     voiceControl.add(new Option(shortName + " (" + language + ")", v.name));
   });
 
-  if (chosenVoices.some(voice => voice.name === previousChoice)) {
-    voiceControl.value = previousChoice;
-  }
+  if (previousChoice) voiceControl.value = previousChoice;
 }
 loadVoices();
-if (speechSupported) synth.addEventListener("voiceschanged", loadVoices);
+synth.addEventListener("voiceschanged", loadVoices);
 
 function getSelectedVoice() {
-  if (!speechSupported) return null;
   return synth.getVoices().find(function (v) {
     return v.name === voiceControl.value;
   }) || null;
@@ -109,13 +103,6 @@ statusEl.style.minHeight = "1.2em";
 readingText.parentNode.insertBefore(statusEl, readingText);
 function setStatus(message) {
   statusEl.textContent = message;
-}
-
-if (!speechSupported) {
-  playPauseBtn.disabled = true;
-  stopBtn.disabled = true;
-  voiceControl.disabled = true;
-  setStatus("Read-aloud isn't supported in this browser. You can still add and read passages, or use a browser with speech support.");
 }
 
 function decodeEntities(s) {
@@ -417,7 +404,7 @@ function finishReading() {
 
 function resetAudio() {
   runId++;
-  if (speechSupported) synth.cancel();
+  synth.cancel();
   finishReading();
 }
 
@@ -477,7 +464,6 @@ function resumeFromCurrentSentence() {
 }
 
 playPauseBtn.addEventListener("click", async function () {
-  if (!speechSupported) return;
   if (isTranslating) return;
 
   if (!isPlaying) {
@@ -530,52 +516,71 @@ voiceControl.addEventListener("change", async function () {
 });
 
 // ===============================
-// PERSON 1 - SAVED PASSAGES (Home screen library, stored in the browser)
+// PERSON 1 - SAVED PASSAGES (Home screen library, stored on the backend server)
 // ===============================
-const PASSAGES_KEY = "lexiPassages";
-const MAX_SAVED_PASSAGES = 20;
-
-function getSavedPassages() {
-  try {
-    return JSON.parse(localStorage.getItem(PASSAGES_KEY)) || [];
-  } catch (e) {
-    return [];
-  }
-}
+const API_URL = "http://localhost:3000"; // change to the deployed backend address later
+let currentPassageId = null; // id of the saved passage shown in the reader (null if none)
+let editingId = null;        // id being edited right now (null when adding a new passage)
 
 function makeTitle(text) {
   const words = text.trim().split(/\s+/);
   const short = words.slice(0, 6).join(" ");
-  return words.length > 6 ? short + "…" : short;
+  return words.length > 6 ? short + "\u2026" : short;
 }
 
-function savePassage(text) {
-  const passages = getSavedPassages();
-  passages.unshift({ title: makeTitle(text), text: text });
-  localStorage.setItem(PASSAGES_KEY, JSON.stringify(passages.slice(0, MAX_SAVED_PASSAGES)));
-  renderPassageList();
-}
-
-function renderPassageList() {
-  const passages = getSavedPassages();
-  const list = document.getElementById("passageList");
-  list.innerHTML = "";
-
-  if (passages.length === 0) {
-    list.innerHTML = "<p>No passages yet. Go to Reading and tap + to add one.</p>";
-    return;
-  }
-
-  passages.forEach(function (p) {
-    const card = document.createElement("div");
-    card.className = "passage";
-    card.textContent = p.title;
-    card.addEventListener("click", function () {
-      loadPassageIntoReader(p.text, p.title);
-      showScreen("reading");
+async function savePassage(text) {
+  try {
+    const res = await fetch(API_URL + "/passages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: makeTitle(text), text: text })
     });
-    list.appendChild(card);
-  });
+    if (!res.ok) throw new Error("Server error");
+    const saved = await res.json();
+    currentPassageId = saved.id;
+    renderPassageList();
+  } catch (e) {
+    App.showToast("Could not save to the server.", "error");
+  }
+}
+
+async function updatePassage(id, text) {
+  try {
+    const res = await fetch(API_URL + "/passages/" + id, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: makeTitle(text), text: text })
+    });
+    if (!res.ok) throw new Error("Server error");
+    renderPassageList();
+  } catch (e) {
+    App.showToast("Could not update the passage.", "error");
+  }
+}
+
+async function renderPassageList() {
+  const list = document.getElementById("passageList");
+  const status = document.getElementById("passageStatus");
+  try {
+    const res = await fetch(API_URL + "/passages");
+    const passages = await res.json();
+    list.innerHTML = "";
+    status.textContent = passages.length ? "" : "No passages yet. Go to Reading and tap + to add one.";
+
+    passages.forEach(function (p) {
+      const card = document.createElement("div");
+      card.className = "passage";
+      card.textContent = p.title;
+      card.addEventListener("click", function () {
+        loadPassageIntoReader(p.text, p.title);
+        currentPassageId = p.id;
+        showScreen("reading");
+      });
+      list.appendChild(card);
+    });
+  } catch (e) {
+    status.textContent = "Could not reach the server.";
+  }
 }
 renderPassageList(); // populate Home as soon as the page loads
 
@@ -616,7 +621,7 @@ const FileUploadModule = (() => {
 
   if (!dropZone || !fileInput) {
     console.warn('[FileUploadModule] elements not found — skipping init');
-    return { init: () => {} };
+    return { init: () => { } };
   }
 
   let selectedFile = null;
@@ -881,7 +886,7 @@ const TextInputModule = (() => {
 
   if (!textarea) {
     console.warn('[TextInputModule] textarea not found');
-    return { init: () => {} };
+    return { init: () => { } };
   }
 
   function updateCharCount() {
@@ -939,7 +944,14 @@ const App = (() => {
       return;
     }
     loadPassageIntoReader(cleaned, makeTitle(cleaned));
-    savePassage(cleaned);
+    if (editingId !== null) {
+      currentPassageId = editingId;
+      updatePassage(editingId, cleaned); // editing a saved passage: update it
+      editingId = null;
+    } else {
+      currentPassageId = null;
+      savePassage(cleaned);              // new passage: save it
+    }
     if (addPassagePanel) addPassagePanel.classList.add('hidden');
     showToast('Passage added!', 'success');
   }
@@ -948,6 +960,24 @@ const App = (() => {
     if (addPassageBtn && addPassagePanel) {
       addPassageBtn.addEventListener('click', () => {
         addPassagePanel.classList.toggle('hidden');
+      });
+    }
+
+    // Edit button: put the current saved passage back in the text box
+    const editPassageBtn = document.getElementById('editPassageBtn');
+    if (editPassageBtn && addPassagePanel) {
+      editPassageBtn.addEventListener('click', () => {
+        if (currentPassageId === null || originalText === null) {
+          showToast('Open a saved passage first.', 'error');
+          return;
+        }
+        const box = document.getElementById('textInput');
+        box.value = originalText;
+        box.dispatchEvent(new Event('input')); // refresh the character count
+        editingId = currentPassageId;
+        addPassagePanel.classList.remove('hidden');
+        box.focus();
+        showToast('Edit the text, then tap Add to Reading.', 'info');
       });
     }
 
