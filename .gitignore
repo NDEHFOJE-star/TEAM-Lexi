@@ -1,2 +1,6 @@
 node_modules/
 passages.json
+lexi.db
+lexi.db-journal
+lexi.db-wal
+lexi.db-shm
