@@ -1,11 +1,15 @@
 {
   "name": "lexi",
-  "version": "1.0.0",
-  "scripts": {
-    "start": "node server.js"
-  },
+  "version": "3.0.0",
+  "description": "Lexi - a reading helper for people with dyslexia",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "@libsql/client": "^0.14.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
   }
 }
