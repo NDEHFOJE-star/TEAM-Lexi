@@ -4,3 +4,4 @@ lexi.db
 lexi.db-journal
 lexi.db-wal
 lexi.db-shm
+.env
